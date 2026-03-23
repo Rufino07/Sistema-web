@@ -1,0 +1,18 @@
+{
+  "name": "sistema-web",
+  "version": "1.0.0",
+  "description": "Sistema web de papelería",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rufino07/Sistema-web.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
