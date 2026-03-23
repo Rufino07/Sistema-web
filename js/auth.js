@@ -1,15 +1,21 @@
-// auth.js - Sistema de Autenticación (VERSIÓN FINAL ESTABLE)
+// auth.js - Sistema de Autenticación (VERSIÓN FINAL NETLIFY TEST READY)
 
 const Auth = {
 
     usuarios: [],
+    modoTest: true, // ✅ Modo test: fuerza login cada vez que se abre el sitio
 
     // =========================
     // INICIALIZACIÓN
     // =========================
     init() {
 
-        // ✅ RESET SOLO UNA VEZ (NO SE BORRA SIEMPRE)
+        // 🔹 FORZAR LOGIN SIEMPRE: eliminar sesión automáticamente
+        if (this.modoTest) {
+            localStorage.removeItem('usuarioActual');
+        }
+
+        // 🔹 Reset inicial solo una vez (opcional, limpia datos antiguos)
         if (!localStorage.getItem('resetDone')) {
             localStorage.clear();
             localStorage.setItem('resetDone', 'true');
@@ -34,7 +40,6 @@ const Auth = {
     // CREAR ADMINS INICIALES
     // =========================
     inicializarUsuarios() {
-
         const usuariosIniciales = [
             {
                 id: 1,
@@ -62,12 +67,19 @@ const Auth = {
     // VERIFICAR SESIÓN
     // =========================
     verificarSesion() {
-
         const usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));
         const path = window.location.pathname;
 
         const estaEnLogin = path.includes('login.html');
         const estaEnDashboard = path.includes('dashboard.html');
+
+        // 🔹 Forzar login en modo test
+        if (this.modoTest) {
+            if (estaEnDashboard) {
+                window.location.href = 'login.html';
+            }
+            return;
+        }
 
         if (usuarioActual && estaEnLogin) {
             window.location.href = 'dashboard.html';
@@ -125,17 +137,14 @@ const Auth = {
     // MOSTRAR MENSAJES
     // =========================
     mostrarMensaje(texto, tipo) {
-
         const box = document.getElementById('messageBox');
         if (!box) return;
 
         box.style.display = 'block';
-
         box.className =
             tipo === 'success'
                 ? 'brutal-card soft-blue'
                 : 'brutal-card soft-mauve';
-
         box.textContent = texto;
 
         setTimeout(() => {
@@ -151,7 +160,6 @@ const Auth = {
         window.location.href = 'login.html';
     }
 };
-
 
 // =========================
 // INICIALIZAR SISTEMA
