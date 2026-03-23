@@ -3,19 +3,20 @@
 const Auth = {
 
     usuarios: [],
-    modoTest: true, // ✅ Modo test: fuerza login cada vez que se abre el sitio
+    modoTest: true, // ✅ Modo test: fuerza login la primera vez
 
     // =========================
     // INICIALIZACIÓN
     // =========================
     init() {
 
-        // 🔹 FORZAR LOGIN SIEMPRE: eliminar sesión automáticamente
-        if (this.modoTest) {
+        // 🔹 BORRAR sesión solo la primera vez en modo test
+        if (this.modoTest && !localStorage.getItem('testResetDone')) {
             localStorage.removeItem('usuarioActual');
+            localStorage.setItem('testResetDone', 'true');
         }
 
-        // 🔹 Reset inicial solo una vez (opcional, limpia datos antiguos)
+        // 🔹 Reset inicial solo una vez (limpia datos antiguos)
         if (!localStorage.getItem('resetDone')) {
             localStorage.clear();
             localStorage.setItem('resetDone', 'true');
@@ -72,14 +73,6 @@ const Auth = {
 
         const estaEnLogin = path.includes('login.html');
         const estaEnDashboard = path.includes('dashboard.html');
-
-        // 🔹 Forzar login en modo test
-        if (this.modoTest) {
-            if (estaEnDashboard) {
-                window.location.href = 'login.html';
-            }
-            return;
-        }
 
         if (usuarioActual && estaEnLogin) {
             window.location.href = 'dashboard.html';
