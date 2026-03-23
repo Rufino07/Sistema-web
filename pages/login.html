@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Gestión</title>
+    <link rel="stylesheet" href="../css/brutalist.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--cream);
+            padding: 20px;
+        }
+        .login-box {
+            width: 100%;
+            max-width: 500px;
+            background: var(--cream);
+            border: 8px solid var(--text-dark);
+            padding: 40px;
+            box-shadow: 15px 15px 0 var(--text-dark);
+        }
+        .login-header {
+            background: var(--soft-purple);
+            padding: 20px;
+            margin: -40px -40px 30px -40px;
+            border-bottom: 4px solid var(--text-dark);
+            text-align: center;
+        }
+        .login-header h1 {
+            font-size: 2.5em;
+            font-weight: 900;
+            letter-spacing: -2px;
+            color: var(--text-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>SISTEMA DE<br>GESTIÓN</h1>
+            </div>
+
+            <div id="messageBox" class="brutal-card" style="display: none; margin-bottom: 20px;"></div>
+
+            <form onsubmit="Auth.handleLogin(event)">
+                <div class="mb-20">
+                    <label class="bold uppercase">EMAIL:</label>
+                    <input type="email" class="brutal-input" id="loginEmail" value="admin@papeleria.com" required>
+                </div>
+
+                <div class="mb-20">
+                    <label class="bold uppercase">CONTRASEÑA:</label>
+                    <input type="password" class="brutal-input" id="loginPassword" value="ADMIN123" required>
+                </div>
+
+                <button type="submit" class="brutal-button soft-purple w-100" style="padding: 15px;">
+                    INGRESAR
+                </button>
+
+                <div style="margin-top: 20px; text-align: center; font-size: 0.8em;">
+                    <p> </p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/auth.js"></script>
+</body>
+</html>
