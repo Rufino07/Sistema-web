@@ -26,7 +26,6 @@ const Sales = {
         container.innerHTML = `
             <div class="sales-panel">
 
-                <!-- IZQUIERDA -->
                 <div>
                     <div class="stats-header">
                         <div class="stat-block soft-blue">
@@ -53,7 +52,6 @@ const Sales = {
                     </div>
                 </div>
 
-                <!-- DERECHA -->
                 <div class="cart-panel">
                     <h3 style="margin-bottom: 20px;">CARRITO</h3>
 
@@ -111,7 +109,6 @@ const Sales = {
         `).join('');
     },
 
-    // 🔥 MODAL
     mostrarModalVenta(productoId) {
         const producto = this.productos.find(p => p.id === productoId);
         if (!producto) return;
@@ -122,23 +119,8 @@ const Sales = {
         modal.id = "modalVenta";
 
         modal.innerHTML = `
-            <div style="
-                position: fixed;
-                top:0; left:0;
-                width:100%; height:100%;
-                background: rgba(0,0,0,0.5);
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                z-index:9999;
-            ">
-                <div style="
-                    background:white;
-                    padding:20px;
-                    border-radius:10px;
-                    width:300px;
-                    text-align:center;
-                ">
+            <div style="position: fixed;top:0; left:0;width:100%; height:100%;background: rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
+                <div style="background:white;padding:20px;border-radius:10px;width:300px;text-align:center;">
                     <h3>${producto.nombre}</h3>
 
                     <p>Selecciona tipo:</p>
@@ -154,8 +136,7 @@ const Sales = {
                     </button>
 
                     <p style="margin-top:10px;">Cantidad:</p>
-                    <input id="cantidadVenta" type="number" min="1" value="1"
-                        style="width:100%; padding:5px;">
+                    <input id="cantidadVenta" type="number" min="1" value="1" style="width:100%; padding:5px;">
 
                     <button class="brutal-button" style="margin-top:10px;"
                         onclick="Sales.confirmarAgregar(${productoId})">
@@ -175,7 +156,6 @@ const Sales = {
 
     seleccionarTipoModal(tipo) {
         this.tipoSeleccionado = tipo;
-
         document.getElementById('btnSuelta').style.background = tipo === 'suelta' ? 'green' : '';
         document.getElementById('btnPaquete').style.background = tipo === 'paquete' ? 'green' : '';
     },
@@ -185,24 +165,11 @@ const Sales = {
         const tipo = this.tipoSeleccionado;
         const cantidad = parseInt(document.getElementById('cantidadVenta').value);
 
-        if (!tipo) {
-            App.mostrarNotificacion('SELECCIONA TIPO', 'error');
-            return;
-        }
+        if (!tipo) return App.mostrarNotificacion('SELECCIONA TIPO', 'error');
+        if (!cantidad || cantidad <= 0) return App.mostrarNotificacion('CANTIDAD INVÁLIDA', 'error');
+        if (cantidad > producto.stock) return App.mostrarNotificacion('STOCK INSUFICIENTE', 'error');
 
-        if (!cantidad || cantidad <= 0) {
-            App.mostrarNotificacion('CANTIDAD INVÁLIDA', 'error');
-            return;
-        }
-
-        if (cantidad > producto.stock) {
-            App.mostrarNotificacion('STOCK INSUFICIENTE', 'error');
-            return;
-        }
-
-        const precio = tipo === 'suelta'
-            ? producto.precioSuelta
-            : producto.precioPaquete;
+        const precio = tipo === 'suelta' ? producto.precioSuelta : producto.precioPaquete;
 
         this.carrito.push({
             id: producto.id,
@@ -257,27 +224,24 @@ const Sales = {
         return this.carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
     },
 
+    // 🔥 AQUÍ ESTÁ LA CORRECCIÓN
     actualizarVistaCarrito() {
         const carritoItems = document.getElementById('carritoItems');
         const cartTotal = document.querySelector('.cart-total');
 
         if (carritoItems) carritoItems.innerHTML = this.renderCarrito();
         if (cartTotal) cartTotal.innerHTML = `TOTAL: $${this.getTotalCarrito().toFixed(2)}`;
+
+        // 🔥 ACTIVAR/DESACTIVAR BOTONES
+        const btnFinalizar = document.querySelector('button[onclick="Sales.finalizarVenta()"]');
+        const btnLimpiar = document.querySelector('button[onclick="Sales.limpiarCarrito()"]');
+
+        if (btnFinalizar) btnFinalizar.disabled = this.carrito.length === 0;
+        if (btnLimpiar) btnLimpiar.disabled = this.carrito.length === 0;
     },
 
     finalizarVenta() {
-        if (this.carrito.length === 0) {
-            App.mostrarNotificacion('CARRITO VACÍO', 'error');
-            return;
-        }
-
-        for (const item of this.carrito) {
-            const producto = this.productos.find(p => p.id === item.id);
-            if (!producto || producto.stock < item.cantidad) {
-                App.mostrarNotificacion(`STOCK INSUFICIENTE`, 'error');
-                return;
-            }
-        }
+        if (this.carrito.length === 0) return App.mostrarNotificacion('CARRITO VACÍO', 'error');
 
         const venta = {
             id: App.generarId(),
