@@ -1,4 +1,5 @@
-// products.js - Gestión de productos (SIN COMPRAS)
+// products.js - INVENTARIO CORREGIDO (SUELTA / PAQUETE REAL)
+
 const Products = {
     productos: [],
     categorias: ['TODOS', 'ESCOLAR', 'OFICINA', 'ARTÍSTICO', 'PAPELERÍA'],
@@ -24,7 +25,7 @@ const Products = {
                 <div class="stats-header">
                     <div class="stat-block soft-blue">
                         <div class="stat-number">${this.productos.length}</div>
-                        <div class="stat-label">PRODUCTOS TOTALES</div>
+                        <div class="stat-label">PRODUCTOS</div>
                     </div>
                     <div class="stat-block soft-purple">
                         <div class="stat-number">${stats.stockBajo}</div>
@@ -32,7 +33,7 @@ const Products = {
                     </div>
                     <div class="stat-block">
                         <div class="stat-number">${stats.valorTotal}</div>
-                        <div class="stat-label">VALOR INVENTARIO</div>
+                        <div class="stat-label">INVENTARIO</div>
                     </div>
                 </div>
 
@@ -52,53 +53,34 @@ const Products = {
                         ${this.renderProductos(this.productos)}
                     </div>
                 </div>
-
-                <div class="brutal-card soft-purple" style="margin-top: 20px;">
-                    <h3 style="font-size: 1.5em; margin-bottom: 15px;">STOCK CRÍTICO</h3>
-                    <div id="stockBajoList">
-                        ${this.renderStockBajo()}
-                    </div>
-                </div>
             </div>
         `;
     },
 
     renderProductos(productos) {
         if (productos.length === 0) {
-            return `
-                <div class="brutal-card" style="grid-column: 1/-1; text-align: center; padding: 40px;">
-                    <h3>NO HAY PRODUCTOS</h3>
-                    <button class="brutal-button mt-20" onclick="Products.mostrarModalAgregar()">
-                        AGREGAR PRODUCTO
-                    </button>
-                </div>
-            `;
+            return `<div class="brutal-card">NO HAY PRODUCTOS</div>`;
         }
 
         return productos.map(p => `
             <div class="product-card">
                 <div class="product-image">📦</div>
                 <div class="product-name">${p.nombre}</div>
-                <div class="product-price">$${p.precio.toFixed(2)}</div>
 
-                <div class="flex gap-10" style="justify-content: space-between; align-items: center;">
-                    <span class="product-stock ${p.stock <= p.stockMinimo ? 'stock-low' : ''}">
-                        STOCK: ${p.stock}
-                    </span>
-                    <span style="font-size: 0.8em;">MIN: ${p.stockMinimo}</span>
+                <div class="product-price">
+                    SUELTA: $${p.precioSuelta}<br>
+                    PAQUETE: $${p.precioPaquete}
                 </div>
 
-                <div style="margin-top: 10px; text-align: center;">
-                    <span style="color: green; font-weight: bold;">EN VENTA</span>
+                <div class="product-stock ${p.stock <= p.stockMinimo ? 'stock-low' : ''}">
+                    STOCK: ${p.stock}
                 </div>
 
-                <!-- BOTONES -->
-                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                <div style="margin-top:10px;display:flex;gap:10px;">
                     <button class="brutal-button w-100" onclick="Products.mostrarModalEditar(${p.id})">
                         EDITAR
                     </button>
-
-                    <button class="brutal-button w-100" style="background:red; color:white;" onclick="Products.eliminarProducto(${p.id})">
+                    <button class="brutal-button w-100" style="background:red;color:white;" onclick="Products.eliminarProducto(${p.id})">
                         ELIMINAR
                     </button>
                 </div>
@@ -106,90 +88,54 @@ const Products = {
         `).join('');
     },
 
-    eliminarProducto(productoId) {
-        const confirmar = confirm("¿Eliminar este producto?");
-        if (!confirmar) return;
-
-        this.productos = this.productos.filter(p => p.id !== productoId);
-
-        this.guardarDatos();
-        Dashboard.cargarVista('products');
-        App.mostrarNotificacion('PRODUCTO ELIMINADO');
-    },
-
-    renderStockBajo() {
-        const stockBajo = this.productos.filter(p => p.stock <= p.stockMinimo);
-        
-        if (stockBajo.length === 0) {
-            return '<p>TODO EN STOCK NORMAL</p>';
-        }
-
-        return stockBajo.map(p => `
-            <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 2px solid var(--cream);">
-                <span><strong>${p.nombre}</strong> (Stock: ${p.stock} / Mínimo: ${p.stockMinimo})</span>
-            </div>
-        `).join('');
-    },
-
-    filtrarCategoria(categoria) {
-        this.cargarDatos();
-
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        if (event && event.target) {
-            event.target.classList.add('active');
-        }
-
-        let productosFiltrados = this.productos;
-        if (categoria !== 'TODOS') {
-            productosFiltrados = this.productos.filter(p => 
-                p.categoria?.toUpperCase() === categoria
-            );
-        }
-
-        const grid = document.getElementById('productosGrid');
-        if (grid) {
-            grid.innerHTML = this.renderProductos(productosFiltrados);
-        }
-    },
-
-    getStats() {
-        const valorTotal = this.productos.reduce((sum, p) => sum + (p.precio * p.stock), 0);
-        const stockBajo = this.productos.filter(p => p.stock <= p.stockMinimo).length;
-
-        return {
-            valorTotal: '$' + valorTotal.toFixed(2),
-            stockBajo: stockBajo
-        };
-    },
-
     mostrarModalAgregar() {
         Dashboard.mostrarModal('NUEVO PRODUCTO', `
             <form onsubmit="Products.guardarProducto(event)">
-                <input type="text" class="brutal-input mb-20" name="nombre" placeholder="Nombre" required>
-                <input type="number" class="brutal-input mb-20" name="precio" placeholder="Precio" required>
-                <input type="number" class="brutal-input mb-20" name="stock" placeholder="Stock" required>
-                <input type="number" class="brutal-input mb-20" name="stockMinimo" placeholder="Stock mínimo" required>
+                
+                <input type="text" name="nombre" class="brutal-input mb-20" placeholder="Nombre" required>
 
-                <button type="submit" class="brutal-button w-100">GUARDAR</button>
+                <input type="number" name="precioSuelta" class="brutal-input mb-20" placeholder="Precio suelta (<=50)" required>
+
+                <input type="number" name="precioPaquete" class="brutal-input mb-20" placeholder="Precio paquete (>100)" required>
+
+                <input type="number" name="stock" class="brutal-input mb-20" placeholder="Stock" required>
+
+                <input type="number" name="stockMinimo" class="brutal-input mb-20" placeholder="Stock mínimo" required>
+
+                <button class="brutal-button w-100">GUARDAR</button>
             </form>
         `);
     },
 
     guardarProducto(event) {
         event.preventDefault();
-
         const formData = new FormData(event.target);
 
-        const nuevoProducto = {
+        const precioSuelta = parseFloat(formData.get('precioSuelta'));
+        const precioPaquete = parseFloat(formData.get('precioPaquete'));
+
+        // 🔥 VALIDACIONES
+        if (precioSuelta > 50) {
+            App.mostrarNotificacion('❌ SUELTA NO PUEDE SER > $50', 'error');
+            return;
+        }
+
+        if (precioPaquete <= 100) {
+            App.mostrarNotificacion('❌ PAQUETE DEBE SER > $100', 'error');
+            return;
+        }
+
+        const nuevo = {
             id: App.generarId(),
             nombre: formData.get('nombre').toUpperCase(),
-            precio: parseFloat(formData.get('precio')),
+            precioSuelta,
+            precioPaquete,
             stock: parseInt(formData.get('stock')),
             stockMinimo: parseInt(formData.get('stockMinimo')),
-            fechaRegistro: new Date().toISOString()
+            fecha: new Date().toISOString()
         };
 
-        this.productos.push(nuevoProducto);
+        this.productos.push(nuevo);
         this.guardarDatos();
 
         App.cerrarModales();
@@ -197,42 +143,84 @@ const Products = {
         App.mostrarNotificacion('PRODUCTO AGREGADO');
     },
 
-    mostrarModalEditar(productoId) {
-        const producto = this.productos.find(p => p.id === productoId);
-        if (!producto) return;
+    mostrarModalEditar(id) {
+        const p = this.productos.find(x => x.id === id);
 
         Dashboard.mostrarModal('EDITAR PRODUCTO', `
-            <form onsubmit="Products.actualizarProducto(event, ${productoId})">
-                <input type="text" class="brutal-input mb-20" name="nombre" value="${producto.nombre}" required>
-                <input type="number" class="brutal-input mb-20" name="precio" value="${producto.precio}" required>
-                <input type="number" class="brutal-input mb-20" name="stock" value="${producto.stock}" required>
-                <input type="number" class="brutal-input mb-20" name="stockMinimo" value="${producto.stockMinimo}" required>
+            <form onsubmit="Products.actualizarProducto(event, ${id})">
 
-                <button type="submit" class="brutal-button w-100">ACTUALIZAR</button>
+                <input type="text" name="nombre" class="brutal-input mb-20" value="${p.nombre}" required>
+
+                <input type="number" name="precioSuelta" class="brutal-input mb-20" value="${p.precioSuelta}" required>
+
+                <input type="number" name="precioPaquete" class="brutal-input mb-20" value="${p.precioPaquete}" required>
+
+                <input type="number" name="stock" class="brutal-input mb-20" value="${p.stock}" required>
+
+                <input type="number" name="stockMinimo" class="brutal-input mb-20" value="${p.stockMinimo}" required>
+
+                <button class="brutal-button w-100">ACTUALIZAR</button>
             </form>
         `);
     },
 
-    actualizarProducto(event, productoId) {
+    actualizarProducto(event, id) {
         event.preventDefault();
 
-        const producto = this.productos.find(p => p.id === productoId);
-        if (!producto) return;
-
+        const p = this.productos.find(x => x.id === id);
         const formData = new FormData(event.target);
 
-        producto.nombre = formData.get('nombre').toUpperCase();
-        producto.precio = parseFloat(formData.get('precio'));
-        producto.stock = parseInt(formData.get('stock'));
-        producto.stockMinimo = parseInt(formData.get('stockMinimo'));
+        const precioSuelta = parseFloat(formData.get('precioSuelta'));
+        const precioPaquete = parseFloat(formData.get('precioPaquete'));
+
+        // 🔥 VALIDACIONES
+        if (precioSuelta > 50) {
+            App.mostrarNotificacion('❌ SUELTA NO > $50', 'error');
+            return;
+        }
+
+        if (precioPaquete <= 100) {
+            App.mostrarNotificacion('❌ PAQUETE > $100', 'error');
+            return;
+        }
+
+        p.nombre = formData.get('nombre').toUpperCase();
+        p.precioSuelta = precioSuelta;
+        p.precioPaquete = precioPaquete;
+        p.stock = parseInt(formData.get('stock'));
+        p.stockMinimo = parseInt(formData.get('stockMinimo'));
 
         this.guardarDatos();
+
         App.cerrarModales();
         Dashboard.cargarVista('products');
         App.mostrarNotificacion('PRODUCTO ACTUALIZADO');
+    },
+
+    eliminarProducto(id) {
+        if (!confirm('¿ELIMINAR PRODUCTO?')) return;
+
+        this.productos = this.productos.filter(p => p.id !== id);
+        this.guardarDatos();
+
+        Dashboard.cargarVista('products');
+        App.mostrarNotificacion('ELIMINADO');
+    },
+
+    getStats() {
+        const valorTotal = this.productos.reduce(
+            (sum, p) => sum + (p.precioPaquete * p.stock),
+            0
+        );
+
+        const stockBajo = this.productos.filter(p => p.stock <= p.stockMinimo).length;
+
+        return {
+            valorTotal: '$' + valorTotal.toFixed(2),
+            stockBajo
+        };
     }
 };
 
-// Inicializar
 Products.init();
 window.Products = Products;
