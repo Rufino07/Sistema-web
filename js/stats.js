@@ -51,7 +51,7 @@ const Stats = {
     },
 
     getValorInventario() {
-        return this.productos.reduce((sum, p) => sum + ((p.precioSuelta || 0) * p.stock), 0);
+        return this.productos.reduce((sum, p) => sum + ((p.precioPaquete || 0) * p.stock), 0);
     },
 
     renderProductos() {

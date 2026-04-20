@@ -237,7 +237,7 @@ const Products = {
 
     getStats() {
         const valorTotal = this.productos.reduce(
-            (sum, p) => sum + (p.precioSuelta * p.stock),
+            (sum, p) => sum + (p.precioPaquete * p.stock),
             0
         );
 
