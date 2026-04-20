@@ -1,10 +1,17 @@
-// sales.js - SISTEMA DE VENTAS FINAL CON MODAL
+// sales.js - SISTEMA DE VENTAS CON TICKET
 
 const Sales = {
     productos: [],
     ventas: [],
     carrito: [],
     tipoSeleccionado: null,
+
+    configTienda: {
+        nombre: 'PAPELERÍA EXPRESS',
+        direccion: 'Av. Principal #123, Col. Centro',
+        telefono: '(55) 1234-5678',
+        rfc: 'PEA-123456789'
+    },
 
     init() {
         this.cargarDatos();
@@ -17,6 +24,18 @@ const Sales = {
 
     guardarVentas() {
         localStorage.setItem('ventas', JSON.stringify(this.ventas));
+    },
+
+    getFolio() {
+        const ultimoFolio = this.ventas.length > 0 
+            ? Math.max(...this.ventas.map(v => v.folio)) 
+            : 0;
+        return ultimoFolio + 1;
+    },
+
+    getVendedor() {
+        const usuario = JSON.parse(localStorage.getItem('usuarioActual'));
+        return usuario ? usuario.nombre : 'VENDEDOR';
     },
 
     render(container) {
@@ -64,7 +83,7 @@ const Sales = {
                     </div>
 
                     <button class="brutal-button soft-blue w-100 mt-20"
-                        onclick="Sales.finalizarVenta()"
+                        onclick="Sales.mostrarModalPago()"
                         ${this.carrito.length === 0 ? 'disabled' : ''}>
                         FINALIZAR VENTA
                     </button>
@@ -77,6 +96,198 @@ const Sales = {
                 </div>
             </div>
         `;
+    },
+
+    mostrarModalPago() {
+        const total = this.getTotalCarrito();
+        const modal = document.createElement('div');
+        modal.id = "modalPago";
+
+        modal.innerHTML = `
+            <div style="position: fixed;top:0; left:0;width:100%; height:100%;background: rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
+                <div style="background:white;padding:20px;border-radius:10px;width:350px;text-align:center;max-height:90vh;overflow-y:auto;">
+                    <h3>DATOS DE PAGO</h3>
+                    
+                    <div style="text-align:left;margin-bottom:15px;">
+                        <strong>Total a pagar:</strong> $${total.toFixed(2)}
+                    </div>
+
+                    <p style="text-align:left;">Método de pago:</p>
+                    <select id="metodoPago" class="brutal-input mb-20" style="width:100%;" onchange="Sales.actualizarMontoRecibido()">
+                        <option value="EFECTIVO">EFECTIVO</option>
+                        <option value="TARJETA">TARJETA</option>
+                        <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                    </select>
+
+                    <div id="divMontoRecibido">
+                        <p style="text-align:left;">Monto recibido:</p>
+                        <input type="number" id="montoRecibido" class="brutal-input mb-20" 
+                            style="width:100%;" value="${Math.ceil(total)}" 
+                            oninput="Sales.actualizarCambio()" step="0.01">
+                        
+                        <p style="text-align:left;">Cambio: <strong id="displayCambio">$0.00</strong></p>
+                    </div>
+
+                    <button class="brutal-button soft-blue w-100" style="margin-top:10px;"
+                        onclick="Sales.confirmarPago()">
+                        COBRAR E IMPRIMIR TICKET
+                    </button>
+
+                    <button class="brutal-button soft-mauve w-100" style="margin-top:5px;"
+                        onclick="Sales.cerrarModalPago()">
+                        CANCELAR
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    },
+
+    actualizarMontoRecibido() {
+        const metodo = document.getElementById('metodoPago').value;
+        const divMonto = document.getElementById('divMontoRecibido');
+        
+        if (metodo === 'EFECTIVO') {
+            divMonto.style.display = 'block';
+        } else {
+            divMonto.style.display = 'none';
+            document.getElementById('montoRecibido').value = this.getTotalCarrito();
+        }
+    },
+
+    actualizarCambio() {
+        const total = this.getTotalCarrito();
+        const recibido = parseFloat(document.getElementById('montoRecibido').value) || 0;
+        const cambio = Math.max(0, recibido - total);
+        document.getElementById('displayCambio').textContent = '$' + cambio.toFixed(2);
+    },
+
+    cerrarModalPago() {
+        const modal = document.getElementById('modalPago');
+        if (modal) modal.remove();
+    },
+
+    confirmarPago() {
+        const metodoPago = document.getElementById('metodoPago').value;
+        let montoRecibido = parseFloat(document.getElementById('montoRecibido').value) || 0;
+        const total = this.getTotalCarrito();
+        const cambio = Math.max(0, montoRecibido - total);
+
+        if (metodoPago === 'EFECTIVO' && montoRecibido < total) {
+            App.mostrarNotificacion('MONTO INSUFICIENTE', 'error');
+            return;
+        }
+
+        const folio = this.getFolio();
+        const venta = {
+            folio,
+            id: App.generarId(),
+            fecha: new Date().toISOString(),
+            items: [...this.carrito],
+            subtotal: total,
+            impuesto: total * 0.16,
+            total: total * 1.16,
+            metodoPago,
+            montoRecibido: metodoPago === 'EFECTIVO' ? montoRecibido : total,
+            cambio: metodoPago === 'EFECTIVO' ? cambio : 0,
+            vendedor: this.getVendedor(),
+            tienda: this.configTienda
+        };
+
+        this.ventas.push(venta);
+
+        this.carrito.forEach(item => {
+            const producto = this.productos.find(p => p.id === item.id);
+            if (producto) producto.stock -= item.cantidad;
+        });
+
+        this.guardarVentas();
+        localStorage.setItem('productos', JSON.stringify(this.productos));
+
+        this.carrito = [];
+        this.cerrarModalPago();
+
+        this.mostrarTicket(venta);
+    },
+
+    mostrarTicket(venta) {
+        const fecha = new Date(venta.fecha);
+        const fechaStr = fecha.toLocaleDateString('es-MX');
+        const horaStr = fecha.toLocaleTimeString('es-MX');
+
+        const ticketHTML = `
+            <div style="position: fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:10000;">
+                <div style="background:white;padding:20px;border-radius:5px;width:320px;font-family:'Courier New',monospace;font-size:12px;max-height:90vh;overflow-y:auto;">
+                    <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:10px;margin-bottom:10px;">
+                        <strong>${venta.tienda.nombre}</strong><br>
+                        ${venta.tienda.direccion}<br>
+                        Tel: ${venta.tienda.telefono}<br>
+                        RFC: ${venta.tienda.rfc}
+                    </div>
+                    
+                    <div style="border-bottom:1px dashed #000;padding-bottom:10px;margin-bottom:10px;">
+                        <div>Folio: <strong>#${venta.folio}</strong></div>
+                        <div>Fecha: ${fechaStr}</div>
+                        <div>Hora: ${horaStr}</div>
+                        <div>Vendedor: ${venta.vendedor}</div>
+                    </div>
+
+                    <div style="border-bottom:1px dashed #000;padding-bottom:10px;margin-bottom:10px;">
+                        ${venta.items.map(item => `
+                            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                                <span>${item.nombre} (${item.tipo.toUpperCase()})</span>
+                                <span>${item.cantidad} x $${item.precio.toFixed(2)}</span>
+                            </div>
+                            <div style="text-align:right;margin-bottom:5px;">
+                                $${(item.cantidad * item.precio).toFixed(2)}
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div style="border-bottom:1px dashed #000;padding-bottom:10px;margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Subtotal:</span>
+                            <span>$${venta.subtotal.toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>IVA (16%):</span>
+                            <span>$${venta.impuesto.toFixed(2)}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:14px;">
+                            <span>TOTAL:</span>
+                            <span>$${venta.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+
+                    <div style="border-bottom:1px dashed #000;padding-bottom:10px;margin-bottom:10px;">
+                        <div>Método: ${venta.metodoPago}</div>
+                        ${venta.metodoPago === 'EFECTIVO' ? `
+                            <div>Recibido: $${venta.montoRecibido.toFixed(2)}</div>
+                            <div>Cambio: $${venta.cambio.toFixed(2)}</div>
+                        ` : ''}
+                    </div>
+
+                    <div style="text-align:center;">
+                        <p>¡GRACIAS POR SU COMPRA!</p>
+                        <p>Vuelva pronto</p>
+                    </div>
+
+                    <button class="brutal-button soft-blue w-100" style="margin-top:15px;"
+                        onclick="this.parentElement.parentElement.remove(); Dashboard.cargarVista('sales');">
+                        CERRAR
+                    </button>
+                    
+                    <button class="brutal-button w-100" style="margin-top:5px;"
+                        onclick="window.print();">
+                        IMPRIMIR
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', ticketHTML);
+        App.mostrarNotificacion(`VENTA #${venta.folio} REGISTRADA`);
     },
 
     renderProductosVenta() {
@@ -224,7 +435,6 @@ const Sales = {
         return this.carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
     },
 
-    // 🔥 AQUÍ ESTÁ LA CORRECCIÓN
     actualizarVistaCarrito() {
         const carritoItems = document.getElementById('carritoItems');
         const cartTotal = document.querySelector('.cart-total');
@@ -232,38 +442,11 @@ const Sales = {
         if (carritoItems) carritoItems.innerHTML = this.renderCarrito();
         if (cartTotal) cartTotal.innerHTML = `TOTAL: $${this.getTotalCarrito().toFixed(2)}`;
 
-        // 🔥 ACTIVAR/DESACTIVAR BOTONES
-        const btnFinalizar = document.querySelector('button[onclick="Sales.finalizarVenta()"]');
+        const btnFinalizar = document.querySelector('button[onclick="Sales.mostrarModalPago()"]');
         const btnLimpiar = document.querySelector('button[onclick="Sales.limpiarCarrito()"]');
 
         if (btnFinalizar) btnFinalizar.disabled = this.carrito.length === 0;
         if (btnLimpiar) btnLimpiar.disabled = this.carrito.length === 0;
-    },
-
-    finalizarVenta() {
-        if (this.carrito.length === 0) return App.mostrarNotificacion('CARRITO VACÍO', 'error');
-
-        const venta = {
-            id: App.generarId(),
-            fecha: new Date().toISOString(),
-            items: [...this.carrito],
-            total: this.getTotalCarrito()
-        };
-
-        this.ventas.push(venta);
-
-        this.carrito.forEach(item => {
-            const producto = this.productos.find(p => p.id === item.id);
-            if (producto) producto.stock -= item.cantidad;
-        });
-
-        this.guardarVentas();
-        localStorage.setItem('productos', JSON.stringify(this.productos));
-
-        this.carrito = [];
-
-        App.mostrarNotificacion(`VENTA REGISTRADA`);
-        Dashboard.cargarVista('sales');
     },
 
     getVentasHoy() {
@@ -272,7 +455,7 @@ const Sales = {
 
         return {
             cantidad: ventasHoy.length,
-            total: ventasHoy.reduce((sum, v) => sum + v.total, 0)
+            total: ventasHoy.reduce((sum, v) => sum + (v.subtotal || v.total), 0)
         };
     },
 

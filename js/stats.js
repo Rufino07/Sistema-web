@@ -51,7 +51,7 @@ const Stats = {
     },
 
     getValorInventario() {
-        return this.productos.reduce((sum, p) => sum + (p.precio * p.stock), 0);
+        return this.productos.reduce((sum, p) => sum + ((p.precioSuelta || 0) * p.stock), 0);
     },
 
     renderProductos() {
@@ -65,7 +65,7 @@ const Stats = {
                     <tr>
                         <th>PRODUCTO</th>
                         <th>STOCK</th>
-                        <th>PRECIO</th>
+                        <th>PRECIO SUELTA</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -73,7 +73,7 @@ const Stats = {
                         <tr>
                             <td class="bold">${p.nombre}</td>
                             <td>${p.stock}</td>
-                            <td>$${p.precio.toFixed(2)}</td>
+                            <td>$${(p.precioSuelta || 0).toFixed(2)}</td>
                         </tr>
                     `).join('')}
                 </tbody>

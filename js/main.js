@@ -17,47 +17,52 @@ const App = {
             {
                 id: 1,
                 nombre: 'LAPIZ HB',
-                descripcion: 'Lápiz negro HB',
-                categoria: 'escolar',
-                precio: 2.50,
+                precioSuelta: 2.50,
+                precioPaquete: 20.00,
                 stock: 100,
-                stockMinimo: 20
+                stockMinimo: 20,
+                categoria: 'ESCOLAR',
+                fecha: new Date().toISOString()
             },
             {
                 id: 2,
                 nombre: 'CUADERNO PRO',
-                descripcion: 'Cuaderno profesional 100 hojas',
-                categoria: 'escolar',
-                precio: 35.00,
+                precioSuelta: 35.00,
+                precioPaquete: 150.00,
                 stock: 45,
-                stockMinimo: 15
+                stockMinimo: 15,
+                categoria: 'ESCOLAR',
+                fecha: new Date().toISOString()
             },
             {
                 id: 3,
                 nombre: 'MARCADOR PERMANENTE',
-                descripcion: 'Marcador permanente negro',
-                categoria: 'oficina',
-                precio: 12.50,
+                precioSuelta: 12.50,
+                precioPaquete: 120.00,
                 stock: 30,
-                stockMinimo: 10
+                stockMinimo: 10,
+                categoria: 'OFICINA',
+                fecha: new Date().toISOString()
             },
             {
                 id: 4,
                 nombre: 'HOJAS BLANCAS',
-                descripcion: 'Resma de 500 hojas',
-                categoria: 'oficina',
-                precio: 80.00,
+                precioSuelta: 45.00,
+                precioPaquete: 400.00,
                 stock: 12,
-                stockMinimo: 8
+                stockMinimo: 8,
+                categoria: 'OFICINA',
+                fecha: new Date().toISOString()
             },
             {
                 id: 5,
                 nombre: 'PLUMONES 12 PZAS',
-                descripcion: 'Juego de 12 plumones',
-                categoria: 'artistico',
-                precio: 65.00,
+                precioSuelta: 65.00,
+                precioPaquete: 250.00,
                 stock: 8,
-                stockMinimo: 5
+                stockMinimo: 5,
+                categoria: 'ARTÍSTICO',
+                fecha: new Date().toISOString()
             }
         ];
 

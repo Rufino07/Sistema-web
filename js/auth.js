@@ -3,22 +3,15 @@
 const Auth = {
 
     usuarios: [],
-    modoTest: true, // ✅ Modo test: fuerza login la primera vez
 
     // =========================
     // INICIALIZACIÓN
     // =========================
     init() {
 
-        // 🔹 BORRAR sesión solo la primera vez en modo test
-        if (this.modoTest && !localStorage.getItem('testResetDone')) {
-            localStorage.removeItem('usuarioActual');
-            localStorage.setItem('testResetDone', 'true');
-        }
-
-        // 🔹 Reset inicial solo una vez (limpia datos antiguos)
+        // 🔹 Reset inicial solo una vez (solo limpia sesión, NO todo)
         if (!localStorage.getItem('resetDone')) {
-            localStorage.clear();
+            localStorage.removeItem('usuarioActual');
             localStorage.setItem('resetDone', 'true');
         }
 

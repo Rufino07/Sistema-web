@@ -39,7 +39,7 @@ const Products = {
 
                 <div class="tabs-container">
                     ${this.categorias.map(cat => `
-                        <div class="tab ${cat === 'TODOS' ? 'active' : ''}" onclick="Products.filtrarCategoria('${cat}')">
+                        <div class="tab ${cat === 'TODOS' ? 'active' : ''}" data-cat="${cat}" onclick="Products.filtrarCategoria('${cat}')">
                             ${cat}
                         </div>
                     `).join('')}
@@ -55,6 +55,19 @@ const Products = {
                 </div>
             </div>
         `;
+    },
+
+    filtrarCategoria(categoria) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelector(`.tab[data-cat="${categoria}"]`)?.classList.add('active');
+        
+        let productosFiltrados = this.productos;
+        
+        if (categoria !== 'TODOS') {
+            productosFiltrados = this.productos.filter(p => p.categoria === categoria);
+        }
+        
+        document.getElementById('productosGrid').innerHTML = this.renderProductos(productosFiltrados);
     },
 
     renderProductos(productos) {
@@ -94,6 +107,13 @@ const Products = {
                 
                 <input type="text" name="nombre" class="brutal-input mb-20" placeholder="Nombre" required>
 
+                <select name="categoria" class="brutal-input mb-20" required>
+                    <option value="">Seleccionar categoría</option>
+                    ${this.categorias.filter(c => c !== 'TODOS').map(cat => 
+                        `<option value="${cat}">${cat}</option>`
+                    ).join('')}
+                </select>
+
                 <input type="number" name="precioSuelta" class="brutal-input mb-20" placeholder="Precio suelta (<=50)" required>
 
                 <input type="number" name="precioPaquete" class="brutal-input mb-20" placeholder="Precio paquete (>100)" required>
@@ -128,6 +148,7 @@ const Products = {
         const nuevo = {
             id: App.generarId(),
             nombre: formData.get('nombre').toUpperCase(),
+            categoria: formData.get('categoria'),
             precioSuelta,
             precioPaquete,
             stock: parseInt(formData.get('stock')),
@@ -150,6 +171,12 @@ const Products = {
             <form onsubmit="Products.actualizarProducto(event, ${id})">
 
                 <input type="text" name="nombre" class="brutal-input mb-20" value="${p.nombre}" required>
+
+                <select name="categoria" class="brutal-input mb-20" required>
+                    ${this.categorias.filter(c => c !== 'TODOS').map(cat => 
+                        `<option value="${cat}" ${p.categoria === cat ? 'selected' : ''}>${cat}</option>`
+                    ).join('')}
+                </select>
 
                 <input type="number" name="precioSuelta" class="brutal-input mb-20" value="${p.precioSuelta}" required>
 
@@ -185,6 +212,7 @@ const Products = {
         }
 
         p.nombre = formData.get('nombre').toUpperCase();
+        p.categoria = formData.get('categoria');
         p.precioSuelta = precioSuelta;
         p.precioPaquete = precioPaquete;
         p.stock = parseInt(formData.get('stock'));
@@ -209,7 +237,7 @@ const Products = {
 
     getStats() {
         const valorTotal = this.productos.reduce(
-            (sum, p) => sum + (p.precioPaquete * p.stock),
+            (sum, p) => sum + (p.precioSuelta * p.stock),
             0
         );
 
